@@ -2,34 +2,35 @@ const http = require("http");
 const fs = require("fs");
 const url = require("url");
 
-function templateHTML(title, list, control, body) {
-    return `
-        <!doctype html>
-        <html>
-        <head>
-            <title>WEB2 - Node.js - ${title}</title>
-            <meta charset="utf-8">
-        </head>
-        <body>
-            <h1><a href="/">Node.js</a></h1>
-            ${list}
-            ${control}
-            ${body}
-        </body>
-        </html>
-    `;
-}
+const template = {
+    html: function(title, list, control, body) {
+        return `
+            <!doctype html>
+            <html>
+            <head>
+                <title>WEB2 - Node.js - ${title}</title>
+                <meta charset="utf-8">
+            </head>
+            <body>
+                <h1><a href="/">Node.js</a></h1>
+                ${list}
+                ${control}
+                ${body}
+            </body>
+            </html>
+        `;
+    },
+    list: function(fileList) {
+        let list = "<ul>";
+        let i = 0;
+        while (i < fileList.length) {
+            list += `<li><a href="/?id=${fileList[i]}">${fileList[i]}</a></li>`;
+            ++i;
+        }
+        list += "</ul>";
 
-function templateList(fileList) {
-    let list = "<ul>";
-    let i = 0;
-    while (i < fileList.length) {
-        list += `<li><a href="/?id=${fileList[i]}">${fileList[i]}</a></li>`;
-        ++i;
+        return list;
     }
-    list += "</ul>";
-
-    return list;
 }
 
 const app = http.createServer((req, res) => {
@@ -46,15 +47,15 @@ const app = http.createServer((req, res) => {
                 <h2>${title}</h2>
                 <article>${description}</article>
             `;
-            let list = templateList(fileList);
+            let list = template.list(fileList);
             let control = `
                 <a href="/create">Create</a>
             `;
 
-            let template = templateHTML(title, list, control, body);
+            let html = template.html(title, list, control, body);
 
             res.writeHead(200);
-            res.end(template);
+            res.end(html);
         });
     } else if (pathName === "/" && queryData.id !== undefined) {
         // contents page
@@ -65,7 +66,7 @@ const app = http.createServer((req, res) => {
                     <h2>${title}</h2>
                     <article>${description}</article>
                 `;
-                let list = templateList(fileList);
+                let list = template.list(fileList);
                 let control = `
                     <a href="/update?id=${title}">Update</a>
                     <form action="/delete_process" method="post">
@@ -74,10 +75,10 @@ const app = http.createServer((req, res) => {
                     </form>
                 `;
 
-                let template = templateHTML(title, list, control, body);
+                let html = template.html(title, list, control, body);
     
                 res.writeHead(200);
-                res.end(template);
+                res.end(html);
             });
         });
     } else if (pathName === "/create") {
@@ -94,13 +95,13 @@ const app = http.createServer((req, res) => {
                     </form>
                 </article>
             `;
-            let list = templateList(fileList);
+            let list = template.list(fileList);
             let control = "";
 
-            let template = templateHTML(title, list, control, body);
+            let html = template.html(title, list, control, body);
 
             res.writeHead(200);
-            res.end(template);
+            res.end(html);
         });
     } else if (pathName === "/create_process") {
         // create process
@@ -138,15 +139,15 @@ const app = http.createServer((req, res) => {
                         </form>
                     </article>
                 `;
-                let list = templateList(fileList);
+                let list = template.list(fileList);
                 let control = `
                     <a href="/update?id=${title}">Update</a>
                 `;
 
-                let template = templateHTML(title, list, control, body);
+                let html = template.html(title, list, control, body);
     
                 res.writeHead(200);
-                res.end(template);
+                res.end(html);
             });
         });
     } else if (pathName === "/update_process") {
