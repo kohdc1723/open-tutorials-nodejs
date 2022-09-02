@@ -68,6 +68,10 @@ const app = http.createServer((req, res) => {
                 let list = templateList(fileList);
                 let control = `
                     <a href="/update?id=${title}">Update</a>
+                    <form action="/delete_process" method="post">
+                        <input type="hidden" name="id" value="${title}">
+                        <input type="submit" value="Delete" style="all: unset; text-decoration: underline; color: blue; cursor: pointer">
+                    </form>
                 `;
 
                 let template = templateHTML(title, list, control, body);
@@ -166,6 +170,25 @@ const app = http.createServer((req, res) => {
                     });
                     res.end();
                 });
+            });
+        });
+    } else if (pathName === "/delete_process") {
+        // delete process
+        let body = "";
+
+        req.on("data", (data) => {
+            body += data;
+        });
+        
+        req.on("end", () => {
+            let post = new URLSearchParams(body);
+            let id = post.get("id");
+            
+            fs.unlink(`./data/${id}`, (err) => {
+                res.writeHead(302, {
+                    Location: "/"
+                });
+                res.end();
             });
         });
     } else {
