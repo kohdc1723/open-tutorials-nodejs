@@ -1,6 +1,8 @@
 const http = require("http");
 const fs = require("fs");
 const url = require("url");
+const path = require("path");
+const sanitizeHtml = require("sanitize-html");
 const template = require("./lib/template");
 
 const app = http.createServer((req, res) => {
@@ -30,22 +32,26 @@ const app = http.createServer((req, res) => {
     } else if (pathName === "/" && queryData.id !== undefined) {
         // contents page
         fs.readdir("./data", (err, fileList) => {
-            fs.readFile(`./data/${queryData.id}`, "utf8", (err, description) => {
+            let filteredId = path.parse(queryData.id).base;
+            fs.readFile(`./data/${filteredId}`, "utf8", (err, description) => {
                 let title = queryData.id;
+                let sanitizedTitle = sanitizeHtml(title);
+                let sanitizedDescription = sanitizeHtml(description);
+
                 let body = `
-                    <h2>${title}</h2>
-                    <article>${description}</article>
+                    <h2>${sanitizedTitle}</h2>
+                    <article>${sanitizedDescription}</article>
                 `;
                 let list = template.list(fileList);
                 let control = `
-                    <a href="/update?id=${title}">Update</a>
+                    <a href="/update?id=${sanitizedTitle}">Update</a>
                     <form action="/delete_process" method="post">
-                        <input type="hidden" name="id" value="${title}">
+                        <input type="hidden" name="id" value="${sanitizedTitle}">
                         <input type="submit" value="Delete" style="all: unset; text-decoration: underline; color: blue; cursor: pointer">
                     </form>
                 `;
 
-                let html = template.html(title, list, control, body);
+                let html = template.html(sanitizedTitle, list, control, body);
     
                 res.writeHead(200);
                 res.end(html);
@@ -96,7 +102,8 @@ const app = http.createServer((req, res) => {
     } else if (pathName === "/update") {
         // update page
         fs.readdir("./data", (err, fileList) => {
-            fs.readFile(`./data/${queryData.id}`, "utf8", (err, description) => {
+            let filteredId = path.parse(queryData.id).base;
+            fs.readFile(`./data/${filteredId}`, "utf8", (err, description) => {
                 let title = queryData.id;
                 let body = `
                     <h2>${title}</h2>
@@ -154,8 +161,9 @@ const app = http.createServer((req, res) => {
         req.on("end", () => {
             let post = new URLSearchParams(body);
             let id = post.get("id");
+            let filteredId = path.parse(id).base; 
             
-            fs.unlink(`./data/${id}`, (err) => {
+            fs.unlink(`./data/${filteredId}`, (err) => {
                 res.writeHead(302, {
                     Location: "/"
                 });
